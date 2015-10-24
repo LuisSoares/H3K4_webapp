@@ -1,3 +1,6 @@
 *.bdg
 .idea
 *.pkl
+CUTS.txt
+genes.txt
+*.hdf5

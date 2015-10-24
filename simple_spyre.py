@@ -12,6 +12,7 @@ import numpy as np
 from collections import OrderedDict
 import os
 import pickle
+import h5py
 
 
 #Setting plotting parameters
@@ -28,7 +29,7 @@ mpl.rcParams['axes.axisbelow'] = True
 mpl.rcParams['font.family'] = 'sans-serif'
 mpl.rcParams['font.sans-serif'] = 'HELVETICA'
 mpl.rcParams['text.color'] = '#3B3B3B'
-mpl.rcParams['axes.color_cycle'] = ['#E55934', '#5BC0EB']
+mpl.rcParams['axes.color_cycle'] = ['#921B16', '#D6701C','#251F47']
 mpl.rcParams['legend.fancybox'] = True
 mpl.rcParams['legend.fontsize'] = "medium"
 mpl.rcParams['legend.shadow'] = False
@@ -48,45 +49,6 @@ class CustomView(server.View.View):
         f.close()
         return html
 
-server.View.View = CustomView
-
-# Genomic stuff
-# TODO: Maybe create a file containing the names of datasets to make it trully costumizable upon deployement
-# The lists of chromosome names and of size is for S.cerevisiae
-
-list_of_chromosomes = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV',
-                          'XVI', 'MT']
-size_of_chromosomes = [230218, 813184, 316620, 1531933, 576874, 270161, 1090940, 562643, 439888, 745751, 666816,
-                           1078177, 924431, 784333, 1091291, 948066, 85779]
-
-# Loads chromosomes with track from BDG file
-# the BDG file is a normal BED FILE, the SEQ_NAME collumn should contain the names of the chromosomes without "chr"
-def load_track_from_bdg(track_file):
-    chromosome_dict = OrderedDict()
-    for n in range(len(list_of_chromosomes)):
-        chromosome_dict[list_of_chromosomes[n]] = np.zeros(size_of_chromosomes[n])
-    with open(track_file) as data:
-        for line in data:
-            # if 'MT' in line:continue
-            line_list = line.rstrip().split('\t')
-            chromosome_dict[line_list[0]][int(line_list[1]):int(line_list[2])] = float(line_list[3])
-    return chromosome_dict
-
-
-# Only runs the function the first time, otherwise relies on pickled list
-if not os.path.exists('datasets.pkl'):
-    wt_me3 = load_track_from_bdg('bar40_norm.bdg')
-    wt_me2 = load_track_from_bdg('bar49_norm.bdg')
-    data_sets = [wt_me3, wt_me2]
-    pickle.dump(data_sets, open('datasets.pkl', 'wb'))
-
-
-data_sets = pickle.load(open('datasets.pkl', 'rb'))
-
-data_sets_names = ['H3K4me3', 'H3K4me2']
-data_sets_legend = ['H3K4me$^3$', 'H3K4me$^2$']
-
-# Loads gene list from BED file
 def load_gene_list(gene_file,name=True):
     gene_list = []
     genes = open(gene_file)
@@ -102,32 +64,13 @@ def load_gene_list(gene_file,name=True):
 
 
 genes = load_gene_list('genes.txt')
-cuts=load_gene_list('CUTS.txt',name=False)
-# Loads chromosomes with Genes from BDG file, each chromosome is a 2D numpy array with first row
-# being the + strand genes, and the second row the genes in the - strand
-def create_genes_tracks(gene_list):
-    chromosome_dict = OrderedDict()
-    for n in range(len(list_of_chromosomes)):
-        chromosome_dict[list_of_chromosomes[n]] = np.zeros((2,size_of_chromosomes[n]), dtype='b')
-    for line in gene_list:
-        if line[4] == '+':
-            chromosome_dict[line[1]][0,(line[2]):int(line[3])] = 1
-        else:
-            chromosome_dict[line[1]][1,int(line[2]):int(line[3])] = -1
-    return chromosome_dict
 
-# TODO:maybe change to native numpy array save
-# Only runs the function the first time, otherwise relies on pickled array
-if not os.path.exists('genes.pkl'):
-    genes_track = create_genes_tracks(genes)
-    pickle.dump(genes_track, open('genes.pkl', 'wb'))
-if not os.path.exists('cuts.pkl'):
-    genes_track = create_genes_tracks(cuts)
-    pickle.dump(genes_track, open('cuts.pkl', 'wb'))
+server.View.View = CustomView
 
-genes_track = pickle.load(open('genes.pkl', 'rb'))
-cuts_track = pickle.load(open('cuts.pkl', 'rb'))
-
+data_sets=h5py.File("datasets.hdf5","r")
+data_sets_names = ['wt_me3', 'wt_me2','spp1_me3','spp1_me2']
+location_sets=['genes','CUTS']
+data_sets_legend = ['H3K4me$^3$', 'H3K4me$^2$','H3K4me$^3$ ($\Delta$spp1)','H3K4me$^2$ ($\Delta$spp1)']
 
 class SimpleApp(server.App):
     title = "Gene plotter"
@@ -142,7 +85,9 @@ class SimpleApp(server.App):
                "label":"Track",
                "options": [
                    {"label": "H3K4me3", "value": 0, "checked": True},
-                   {"label": "H3K4me2", "value": 1}
+                   {"label": "H3K4me2", "value": 1,},
+                   {"label": "H3K4me3 (&#916;spp1)","value":2},
+                   {"label": "H3K4me2 (&#916;spp1)","value":3}
                ],
                "variable_name": 'check_boxes'},
               {"input_type": 'slider',
@@ -233,22 +178,26 @@ class SimpleApp(server.App):
         splt1.axes.xaxis.set_ticklabels([])
         splt1.set_ylabel('Normalized counts per million reads')
         n=0
-        fill_colors=['#E55934', '#5BC0EB']
+        fill_colors=['#921B16', '#D6701C','#251F47','#68A691']
         for item in params['check_boxes']:
             if current_gene[4] == '+':
                 splt1.plot(
-                    data_sets[int(item)][current_gene[1]][current_gene[2] - range_ext:current_gene[3] + range_ext],
-                    label=data_sets_legend[int(item)])
-                splt1.fill_between(range(0,len(data_sets[int(item)][current_gene[1]][current_gene[2] - range_ext:current_gene[3] + range_ext])),
-                0, data_sets[int(item)][current_gene[1]][current_gene[2] - range_ext:current_gene[3] + range_ext], alpha=0.2,color=fill_colors[n])
+                    data_sets[data_sets_names[int(item)]][current_gene[1]][current_gene[2] - range_ext:current_gene[3] + range_ext],
+                    label=data_sets_legend[int(item)],color=fill_colors[n])
+                splt1.fill_between(range(0,len(data_sets[data_sets_names[int(item)]][current_gene[1]][current_gene[2] - range_ext:current_gene[3] + range_ext])),
+                0, data_sets[data_sets_names[int(item)]][current_gene[1]][current_gene[2] - range_ext:current_gene[3] + range_ext],
+                                   alpha=0.2,color=fill_colors[n])
             else:
                 splt1.plot(
-                    data_sets[int(item)][current_gene[1]][current_gene[3] + range_ext:current_gene[2] - range_ext:-1],
-                    label=data_sets_legend[int(item)])
-                splt1.fill_between(range(0,len(data_sets[int(item)][current_gene[1]][current_gene[3] + range_ext:current_gene[2] - range_ext:-1])),
-                0, data_sets[int(item)][current_gene[1]][current_gene[3] + range_ext:current_gene[2] - range_ext:-1], alpha=0.2,color=fill_colors[n])
+                    data_sets[data_sets_names[int(item)]][current_gene[1]][current_gene[2] -range_ext:current_gene[3] +range_ext][::-1],
+                    label=data_sets_legend[int(item)],color=fill_colors[n])
+                splt1.fill_between(range(0,len(data_sets[data_sets_names[int(item)]][current_gene[1]][current_gene[2] - range_ext:current_gene[3] + range_ext][::-1])),
+                0, data_sets[data_sets_names[int(item)]][current_gene[1]][current_gene[2] - range_ext:current_gene[3] + range_ext][::-1],
+                                   alpha=0.2,color=fill_colors[n])
             n+=1
-        splt1.legend(loc='upper left', bbox_to_anchor=(1, 1))
+        leg=splt1.legend(loc='upper left', bbox_to_anchor=(1, 1))
+        for legobj in leg.legendHandles:
+            legobj.set_linewidth(2.0)
         size = (current_gene[3] + range_ext) - (current_gene[2] - range_ext)
         splt1.set_xlim(0, size)
         #print(str(plt.ylim()[1] - 5))
@@ -256,17 +205,17 @@ class SimpleApp(server.App):
 
         splt2 = plt.subplot(gs[1, :])
         if current_gene[4] == '+':
-            y_values1 = genes_track[current_gene[1]][0,current_gene[2] - range_ext:current_gene[3] + range_ext]
-            y_values2 = genes_track[current_gene[1]][1,current_gene[2] - range_ext:current_gene[3] + range_ext]
+            y_values1 = data_sets['genes'][current_gene[1]][0,current_gene[2] - range_ext:current_gene[3] + range_ext]
+            y_values2 = data_sets['genes'][current_gene[1]][1,current_gene[2] - range_ext:current_gene[3] + range_ext]
         else:
-            y_values1 = genes_track[current_gene[1]][0,current_gene[3] + range_ext:current_gene[2] - range_ext:-1]
-            y_values2 = genes_track[current_gene[1]][1,current_gene[3] + range_ext:current_gene[2] - range_ext:-1]
+            y_values1 =  data_sets['genes'][current_gene[1]][0,current_gene[2] - range_ext:current_gene[3] + range_ext][::-1]
+            y_values2 =  data_sets['genes'][current_gene[1]][1,current_gene[2] - range_ext:current_gene[3] + range_ext][::-1]
         x_values = range(0, len(y_values1))
         #splt2.plot(y_values, 'grey', linewidth=2)
 
         splt2.plot([0, len(y_values1)], [0, 0], 'black', linewidth=1.5)
-        splt2.fill_between(x_values, y_values1/4, y_values1, color='#FFB30F')
-        splt2.fill_between(x_values, y_values2/4, y_values2, color='#FD151B')
+        splt2.fill_between(x_values, y_values1/4.0, y_values1, color='#FFB30F')
+        splt2.fill_between(x_values, y_values2/4.0, y_values2, color='#FD151B')
         splt2.set_ylim(-1.5, 1.5)
         splt2.text(1.01, 0.5, 'GENES', fontsize=12, transform=splt2.transAxes, verticalalignment='center')
         splt2.yaxis.set_tick_params(color='w')
@@ -275,18 +224,17 @@ class SimpleApp(server.App):
         splt2.set_yticklabels([])
         splt2.set_xlim(0, size)
         splt2.axes.xaxis.set_ticklabels([])
-
         splt3 = plt.subplot(gs[2, :])
         if current_gene[4] == '+':
-            y_values1 = cuts_track[current_gene[1]][0,current_gene[2] - range_ext:current_gene[3] + range_ext]
-            y_values2 = cuts_track[current_gene[1]][1,current_gene[2] - range_ext:current_gene[3] + range_ext]
+            y_values1 =  data_sets['CUTS'][current_gene[1]][0,current_gene[2] - range_ext:current_gene[3] + range_ext]
+            y_values2 =  data_sets['CUTS'][current_gene[1]][1,current_gene[2] - range_ext:current_gene[3] + range_ext]
             splt3.text(0.01, 0.9, '>'*46, fontsize=13, transform=splt3.transAxes, verticalalignment='top',alpha=0.2)
             splt3.text(0.01, 0.46, '<'*46, fontsize=13, transform=splt3.transAxes, verticalalignment='top',alpha=0.2)
             splt2.text(0.01, 0.9, '>'*46, fontsize=13, transform=splt2.transAxes, verticalalignment='top',alpha=0.2)
             splt2.text(0.01, 0.46, '<'*46, fontsize=13, transform=splt2.transAxes, verticalalignment='top',alpha=0.2)
         else:
-            y_values1 = cuts_track[current_gene[1]][0,current_gene[3] + range_ext:current_gene[2] - range_ext:-1]
-            y_values2 = cuts_track[current_gene[1]][1,current_gene[3] + range_ext:current_gene[2] - range_ext:-1]
+            y_values1 = data_sets['CUTS'][current_gene[1]][0,current_gene[2] - range_ext:current_gene[3] + range_ext][::-1]
+            y_values2 = data_sets['CUTS'][current_gene[1]][1,current_gene[2] - range_ext:current_gene[3] + range_ext][::-1]
             splt3.text(0.01, 0.9, '<'*46, fontsize=13, transform=splt3.transAxes, verticalalignment='top',alpha=0.2)
             splt3.text(0.01, 0.46, '>'*46, fontsize=13, transform=splt3.transAxes, verticalalignment='top',alpha=0.2)
             splt2.text(0.01, 0.9, '<'*46, fontsize=13, transform=splt2.transAxes, verticalalignment='top',alpha=0.2)
@@ -294,8 +242,8 @@ class SimpleApp(server.App):
         x_values = range(0, len(y_values1))
         #splt2.plot(y_values, 'grey', linewidth=2)
         splt3.plot([0, len(y_values1)], [0, 0], 'black', linewidth=1.5)
-        splt3.fill_between(x_values, y_values1/4, y_values1, color='#028090',alpha=0.75)
-        splt3.fill_between(x_values, y_values2/4, y_values2, color='#6EEB83',alpha=0.75)
+        splt3.fill_between(x_values, y_values1/4.0, y_values1, color='#028090',alpha=0.75)
+        splt3.fill_between(x_values, y_values2/4.0, y_values2, color='#6EEB83',alpha=0.75)
         splt3.set_ylim(-1.5, 1.5)
         splt3.text(1.01, 0.5, 'CUTS', fontsize=12, transform=splt3.transAxes, verticalalignment='center')
         splt3.spines['bottom'].set_position(('outward', 10))
@@ -308,6 +256,7 @@ class SimpleApp(server.App):
         splt3.set_xlim(0, size)
         for tick in splt3.xaxis.get_major_ticks():
             tick.label.set_fontsize(12)
+
         return fig
 
     def getHTML(self, params):
@@ -318,6 +267,7 @@ class SimpleApp(server.App):
 
     def getTable(self, params):
         df = pd.DataFrame(columns=['Track', 'Code', 'Chromosome', 'Start', 'End', 'Strand', 'Max', 'Max Pos'])
+
         gene = params['freq'].upper()
         print(gene)
         if gene.startswith('CHR'):
@@ -341,7 +291,7 @@ class SimpleApp(server.App):
                     current_gene=temp_gene
                     print (gene)
         for n, item in enumerate(params['check_boxes']):
-            wt_data = data_sets[int(item)][current_gene[1]][current_gene[2]:current_gene[3]]
+            wt_data = data_sets[data_sets_names[int(item)]][current_gene[1]][current_gene[2]:current_gene[3]]
             max_peak = np.max(wt_data)
             if current_gene[4] == '+':
                 max_pos = np.argmax(wt_data)
