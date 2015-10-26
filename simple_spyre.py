@@ -13,6 +13,7 @@ from collections import OrderedDict
 import os
 import pickle
 import h5py
+import io
 
 
 #Setting plotting parameters
@@ -49,6 +50,8 @@ class CustomView(server.View.View):
         f.close()
         return html
 
+
+
 def load_gene_list(gene_file,name=True):
     gene_list = []
     genes = open(gene_file)
@@ -67,10 +70,14 @@ genes = load_gene_list('genes.txt')
 
 server.View.View = CustomView
 
+
 data_sets=h5py.File("datasets.hdf5","r")
-data_sets_names = ['wt_me3', 'wt_me2','spp1_me3','spp1_me2']
-location_sets=['genes','CUTS']
-data_sets_legend = ['H3K4me$^3$', 'H3K4me$^2$','H3K4me$^3$ ($\Delta$spp1)','H3K4me$^2$ ($\Delta$spp1)']
+data_sets_names = ['wt_me3', 'wt_me2','spp1_me3','spp1_me2',
+                   'swd2_me3','swd2_me2','set2_me3','set2_me2','tbp','h4ac','h3','ncb2']
+location_sets=['genes','CUTS','SUTS']
+data_sets_legend = ['H3K4me$^3$', 'H3K4me$^2$','H3K4me$^3$ ($\Delta$spp1)','H3K4me$^2$ ($\Delta$spp1)'
+    ,'H3K4me$^3$ ($\Delta$swd2)','H3K4me$^2$ ($\Delta$swd2)','H3K4me$^3$ ($\Delta$set2)'
+    ,'H3K4me$^3$ ($\Delta$set2)','TBP','H4Ac','H3','NCB2']
 
 class SimpleApp(server.App):
     title = "Gene plotter"
@@ -87,13 +94,21 @@ class SimpleApp(server.App):
                    {"label": "H3K4me3", "value": 0, "checked": True},
                    {"label": "H3K4me2", "value": 1,},
                    {"label": "H3K4me3 (&#916;spp1)","value":2},
-                   {"label": "H3K4me2 (&#916;spp1)","value":3}
+                   {"label": "H3K4me2 (&#916;spp1)","value":3},
+                   {"label": "H3K4me3 (&#916;swd2)","value":4},
+                   {"label": "H3K4me2 (&#916;swd2)","value":5},
+                   {"label": "H3K4me3 (&#916;set2)","value":6},
+                   {"label": "H3K4me2 (&#916;set2)","value":7},
+                   {"label": "TBP(Yoo Jin)","value":8},
+                   {"label": "H4Ac(Yoo Jin)","value":9},
+                   {"label": "H3(Yoo Jin)","value":10},
+                   {"label": "NCB2(Yoo Jin)","value":11}
                ],
                "variable_name": 'check_boxes'},
               {"input_type": 'slider',
                "label": 'Extend Range',
                "min": 0,
-               "max": 2000,
+               "max": 4000,
                "value": 0,
                "variable_name": 'range',
                "action_id": 'plot'}]
@@ -134,15 +149,10 @@ class SimpleApp(server.App):
 
 
     def getPlot(self, params):
-
-        print(params)
-        return self.plot(params)
-
-
-    def plot(self, params):
+        #print(params)
         global current_gene
-        fig = plt.figure(figsize=(9, 6))
-        gs = gridspec.GridSpec(3, 2, height_ratios=[5, 1,1])
+        fig = plt.figure(figsize=(9, 7))
+        gs = gridspec.GridSpec(4, 2, height_ratios=[6, 1,1,1])
         gs.update(hspace=0.05)
         splt1 = plt.subplot(gs[0, :])
         gene = params['freq'].upper()
@@ -178,7 +188,9 @@ class SimpleApp(server.App):
         splt1.axes.xaxis.set_ticklabels([])
         splt1.set_ylabel('Normalized counts per million reads')
         n=0
-        fill_colors=['#921B16', '#D6701C','#251F47','#68A691']
+        fill_colors=['#921B16', '#D6701C','#251F47','#68A691','#68A691',
+                     '#447604','#232621','#0BBE30','#BC3908','#191923','#391923',
+                     '#591923']
         for item in params['check_boxes']:
             if current_gene[4] == '+':
                 splt1.plot(
@@ -224,6 +236,7 @@ class SimpleApp(server.App):
         splt2.set_yticklabels([])
         splt2.set_xlim(0, size)
         splt2.axes.xaxis.set_ticklabels([])
+        #plot 3
         splt3 = plt.subplot(gs[2, :])
         if current_gene[4] == '+':
             y_values1 =  data_sets['CUTS'][current_gene[1]][0,current_gene[2] - range_ext:current_gene[3] + range_ext]
@@ -240,7 +253,6 @@ class SimpleApp(server.App):
             splt2.text(0.01, 0.9, '<'*46, fontsize=13, transform=splt2.transAxes, verticalalignment='top',alpha=0.2)
             splt2.text(0.01, 0.46, '>'*46, fontsize=13, transform=splt2.transAxes, verticalalignment='top',alpha=0.2)
         x_values = range(0, len(y_values1))
-        #splt2.plot(y_values, 'grey', linewidth=2)
         splt3.plot([0, len(y_values1)], [0, 0], 'black', linewidth=1.5)
         splt3.fill_between(x_values, y_values1/4.0, y_values1, color='#028090',alpha=0.75)
         splt3.fill_between(x_values, y_values2/4.0, y_values2, color='#6EEB83',alpha=0.75)
@@ -254,9 +266,36 @@ class SimpleApp(server.App):
         splt3.yaxis.set_tick_params(color='w')
         splt3.set_yticks([])
         splt3.set_xlim(0, size)
-        for tick in splt3.xaxis.get_major_ticks():
-            tick.label.set_fontsize(12)
+        splt3.axes.xaxis.set_ticklabels([])
+        #plot 4
+        splt4 = plt.subplot(gs[3, :])
+        if current_gene[4] == '+':
+            y_values1 =  data_sets['SUTS'][current_gene[1]][0,current_gene[2] - range_ext:current_gene[3] + range_ext]
+            y_values2 =  data_sets['SUTS'][current_gene[1]][1,current_gene[2] - range_ext:current_gene[3] + range_ext]
+            splt4.text(0.01, 0.9, '>'*46, fontsize=13, transform=splt4.transAxes, verticalalignment='top',alpha=0.2)
+            splt4.text(0.01, 0.46, '<'*46, fontsize=13, transform=splt4.transAxes, verticalalignment='top',alpha=0.2)
 
+        else:
+            y_values1 = data_sets['SUTS'][current_gene[1]][0,current_gene[2] - range_ext:current_gene[3] + range_ext][::-1]
+            y_values2 = data_sets['SUTS'][current_gene[1]][1,current_gene[2] - range_ext:current_gene[3] + range_ext][::-1]
+            splt4.text(0.01, 0.9, '<'*46, fontsize=13, transform=splt4.transAxes, verticalalignment='top',alpha=0.2)
+            splt4.text(0.01, 0.46, '>'*46, fontsize=13, transform=splt4.transAxes, verticalalignment='top',alpha=0.2)
+        x_values = range(0, len(y_values1))
+        splt4.plot([0, len(y_values1)], [0, 0], 'black', linewidth=1.5)
+        splt4.fill_between(x_values, y_values1/4.0, y_values1, color='#028090',alpha=0.75)
+        splt4.fill_between(x_values, y_values2/4.0, y_values2, color='#6EEB83',alpha=0.75)
+        splt4.set_ylim(-1.5, 1.5)
+        splt4.text(1.01, 0.5, 'SUTS', fontsize=12, transform=splt4.transAxes, verticalalignment='center')
+        splt4.spines['bottom'].set_position(('outward', 10))
+        splt4.spines['bottom'].set_color('black')
+        splt4.spines['bottom'].set_linewidth(2)
+        splt4.spines["bottom"].axis.axes.tick_params(direction="outward", length=5, color='black', width=2)
+        splt4.xaxis.tick_bottom()
+        splt4.yaxis.set_tick_params(color='w')
+        splt4.set_yticks([])
+        splt4.set_xlim(0, size)
+        for tick in splt4.xaxis.get_major_ticks():
+            tick.label.set_fontsize(12)
         return fig
 
     def getHTML(self, params):
@@ -325,7 +364,6 @@ class SimpleApp(server.App):
 # class Index(App):
 # def getHTML(self, params):
 # return "Title Page Here"
-
 if __name__ == '__main__':
     # site = Site(SimpleSineApp)
     app = SimpleApp()

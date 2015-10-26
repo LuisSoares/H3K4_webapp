@@ -33,21 +33,27 @@ def load_gene_list(gene_file,name=True):
 
 genes = load_gene_list('genes.txt')
 cuts=load_gene_list('CUTS.txt',name=False)
+suts=load_gene_list('suts.txt',name=False)
 
 
-data_sets_names = ['wt_me3', 'wt_me2','spp1_me3','spp1_me2']
-location_sets=['genes','CUTS']
-data_sets_legend = ['H3K4me$^3$', 'H3K4me$^2$','H3K4me$^3$ ($\Delta$spp1)','H3K4me$^2$ ($\Delta$spp1)']
+data_sets_names = ['wt_me3', 'wt_me2','spp1_me3','spp1_me2','swd2_me3','swd2_me2'
+    ,'set2_me3','set2_me2','tbp','h4ac','h3','ncb2']
+location_sets=['genes','CUTS','SUTS']
+
 
 hdf5_file=h5py.File("datasets.hdf5","w")
-for item in data_sets_names:
-    temp=hdf5_file.create_group(item)
+
+def create_hdf5_track(dataset_name,hdf5_file_handler):
+    temp=hdf5_file_handler.create_group(dataset_name)
     for n,chr in enumerate(list_of_chromosomes):
         temp.create_dataset(chr,(size_of_chromosomes[n],),dtype='f')
-for item in location_sets:
-    temp=hdf5_file.create_group(item)
-    for n,chr in enumerate(list_of_chromosomes):
-        temp.create_dataset(chr,(2,size_of_chromosomes[n],),dtype='b')
+
+
+def create_location_datatsets():
+    for item in location_sets:
+        temp=hdf5_file.create_group(item)
+        for n,chr in enumerate(list_of_chromosomes):
+            temp.create_dataset(chr,(2,size_of_chromosomes[n],),dtype='b')
 
 def load_track_from_bdg(track_file,name):
     chromosome_dict = OrderedDict()
@@ -75,9 +81,21 @@ def create_genes_tracks(gene_list,name):
             print(key,value)
             hdf5_file[name][key][...] = value
 
+for item in data_sets_names:
+    create_hdf5_track(item,hdf5_file)
+create_location_datatsets()
 load_track_from_bdg('bar40_norm.bdg','wt_me3')
 load_track_from_bdg('bar49_norm.bdg','wt_me2')
 load_track_from_bdg('bar41_norm.bdg','spp1_me3')
 load_track_from_bdg('bar50_norm.bdg','spp1_me2')
+load_track_from_bdg('bar42_norm.bdg','swd2_me3')
+load_track_from_bdg('bar51_norm.bdg','swd2_me2')
+load_track_from_bdg('BAR28_treat_pileup.bdg','set2_me3')
+load_track_from_bdg('BAR29_treat_pileup.bdg','set2_me2')
+load_track_from_bdg('TBP_treat_pileup.bdg','tbp')
+load_track_from_bdg('H4ac_treat_pileup.bdg','h4ac')
+load_track_from_bdg('H3_treat_pileup.bdg','h3')
+load_track_from_bdg('Ncb2_treat_pileup.bdg','ncb2')
 create_genes_tracks(genes,'genes')
 create_genes_tracks(cuts,'CUTS')
+create_genes_tracks(suts,'SUTS')
