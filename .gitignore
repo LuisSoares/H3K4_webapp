@@ -6,3 +6,4 @@ genes.txt
 *.hdf5
 SUTS.txt
 *.png
+*.csv

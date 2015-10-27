@@ -2,18 +2,13 @@ __author__ = 'Luis'
 from intermine.webservice import Service
 from spyre import server
 import codecs
-#import requests
-# from spyre.server import Site, App
 import matplotlib as mpl
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import numpy as np
-from collections import OrderedDict
 import os
-import pickle
 import h5py
-import io
 
 
 #Setting plotting parameters
@@ -68,7 +63,7 @@ def load_gene_list(gene_file,name=True):
 
 genes = load_gene_list('genes.txt')
 
-server.View.View = CustomView
+#server.View.View = CustomView
 
 
 data_sets=h5py.File("datasets.hdf5","r")
@@ -116,7 +111,9 @@ class SimpleApp(server.App):
     controls = [{"control_type": "button",
                  "control_id": "button1",
                  "label": "Plot",
-                }]
+                }
+
+                ]
 
     outputs = [{"output_type": "plot",
                 "control_id": "button1",
@@ -130,7 +127,9 @@ class SimpleApp(server.App):
                {"output_type": "table",
                 "output_id": "table_id",
                 "control_id": "button1",
-                "tab": "Summary"}]
+                "tab": "Summary"}
+
+               ]
 
     def search_SGD(self,gene_code=None):
         service = Service("http://yeastmine.yeastgenome.org/yeastmine/service")
@@ -360,6 +359,8 @@ class SimpleApp(server.App):
   ga('create', 'UA-55629344-3', 'auto');
   ga('send', 'pageview');
   '''
+
+
 
 # class Index(App):
 # def getHTML(self, params):
