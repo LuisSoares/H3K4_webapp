@@ -9,11 +9,16 @@ class Index(server.App):
                 "on_page_load": True}]
     def getHTML(self, params):
 
-        return '''<body><h1>Description</h1><p style="font-size:16px;font-weigth:900">This website contains web apps developed
-        and used in the Buratowski Lab for the visualization of ChIP-Seq Results.
-        The datasets used were obtained by Luis Soares and Yoo Jin using standard
+        return '''<body><h1>Description</h1><p style="font-size:16px;font-weigth:900"><span><img src="/static/images/857953-Compass.png" alt="COMPASS COMPLEX" style="width:304px;height:228px;float:right"></span>This website contains web apps developed
+        and used in the Buratowski Lab for the visualization of ChIP-Seq results.
+
+        The datasets used were obtained by Luis Soares and YooJin Joo using standard
         Buratowski lab protocols. Sequencing was performed at the Harvard Univeristy Bauer Center
-        Sequencing Facility.</p></body>'''
+        Sequencing Facility.</p>
+        <p style="font-size:16px;font-weigth:900">There are currently 3 tools available at the website:GenePlotter,GenePlotter2 and Comparisons. The difference between GenePlotter and GenePlotter2 relates to
+        the way the plots are displayed, while the former produces a static .png image embedded (which you can save using the mouse right button), in the latter the plot is
+        javascript embeded making it interactive but with no option to save it (there are workarounds but are too complicated to be stated here). The data in GenePlotter2
+        is also downsampled to make it able to be loaded in a decent time line.</p></body>'''
 
     def getCustomCSS(self):
         with open('custom_style.css') as style:

@@ -1,0 +1,48 @@
+<style>p {font-size:16px;font-weight:450;}
+      dl {font-size:16px;font-weight:450;}
+      a {link-color:"Black";font-size:16px;font-weight:450;}
+</style>
+<body>
+
+<h2>Background</h2>
+<p> The entire site is a web app written in python. Currently it is using python 2.7
+(I would rather have it in python 3 but there is some problems with the utf-8 encoding, if you can fix it
+everything should be compatible with newer versions of python).</p>
+<p>The entire site source code (minus datasets) is available at this github repository:</p>
+<p><a href="https://github.com/LuisSoares/H3K4_webapp">github.com/LuisSoares/H3K4_webapp</a></p>
+<p>To run the site locally just you can just clone the repository and launch web_site.py.
+The code is not really commented but with minimal python knowledge you will be able to
+costumize the site to your datasets and preferences. If you want to deploy the web site
+    yourself make sure to change the default JavaScript in each app since it currently
+    links to my google analytics.There is also a helper script called
+Data_load.py that creates the hd5 files with the datasets that are used in web site.
+I was able to successfully deploy the website in both heroku and pythonanywhere for global
+access, if you need instructions contact me.</p>
+
+<h2>Dependencies</h2>
+<p>The website is built with the spyre frame work that is built on top of cherrypy.
+There are several dependencies that must be installed (they are all available with pip)
+    to run the script. The dependencies
+can be infered by the imports of each .py file but the list is:</p>
+<dl>
+    <dt>spyre:</dt>
+    <dd> build the framework</dd>
+    <dt>cherrypy:</dt>
+    <dd>To serve the the website (I think it is installed with spyre)</dd>
+    <dt>h5py:</dt>
+    <dd>To create and access the datasets</dd>
+    <dt>numpy:</dt>
+    <dd>To deal with the datasets data</dd>
+    <dt>matplotlib:</dt>
+    <dd>To draw the plots in the Gene plotter</dd>
+    <dt>intermine:</dt>
+    <dd>To link the gene names to gene codes using SGD data</dd>
+    <dt>pandas:</dt>
+    <dd>To draw the tables in the Gene plotter</dd>
+    <dt>bokeh:</dt>
+    <dd>To draw the plots in Comparisons</dd>
+</dl>
+<h2>Contact and Suggestions:</h2>
+
+<p><a href="mailto:luis.miguel.mendes.soares@gmail.com?Subject=Gene%20Plotter" target="_top">Luis Soares</a></p>
+</body>

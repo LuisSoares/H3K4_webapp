@@ -107,7 +107,7 @@ class pairwise(server.App):
     def getCustomCSS(self):
         with open('custom_style.css') as style:
             previous=style.read()
-        return previous+INLINE.css_raw[0]
+        return previous+".right-panel{width:35%;margin: 5px}"+INLINE.css_raw[0]
 
 
 

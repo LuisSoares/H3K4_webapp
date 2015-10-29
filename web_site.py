@@ -4,6 +4,7 @@ import os
 from index import Index
 from pairwise import pairwise
 from simple_spyre import SimpleApp
+from references import References
 
 
 site = server.Site(Index)
@@ -15,6 +16,7 @@ site.root.templateVars['custom_head'] ='''<div class="banner">
 
 site.addApp(SimpleApp, '/app2')
 site.addApp(pairwise, '/app3')
+site.addApp(References, '/app4')
 for fullRoute, _ in site.site_app_bar[1:]:
 			parent, route = site.get_route(fullRoute)
 			parent.__dict__[route].templateVars['custom_head'] ='''<div class="banner">

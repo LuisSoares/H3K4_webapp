@@ -9,9 +9,41 @@ import matplotlib.gridspec as gridspec
 import numpy as np
 import os
 import h5py
-
-
+import jinja2
+import json
+import mpld3
+from mpld3 import plugins, utils
+import cStringIO
+from scipy import ndimage
+number_of_samples=0
 #Setting plotting parameters
+tableau20 = [(31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),
+             (44, 160, 44), (152, 223, 138), (214, 39, 40), (255, 152, 150),
+             (148, 103, 189), (197, 176, 213), (140, 86, 75), (196, 156, 148),
+             (227, 119, 194), (247, 182, 210), (127, 127, 127), (199, 199, 199),
+             (188, 189, 34), (219, 219, 141), (23, 190, 207), (158, 218, 229)]
+for i in range(len(tableau20)):
+    r, g, b = tableau20[i]
+    tableau20[i] = (r / 255., g / 255., b / 255.)
+def create_java(n):
+        java_string='''obj[%s].elements().
+            on("mouseover", function(d, i){
+            d3.select(this).transition().duration(50).style("stroke-opacity", alpha_fg);
+            obj[%s].elements().transition().duration(200).style("stroke-opacity", alpha_fg);})
+        .on("mouseout", function(d, i){
+            d3.select(this).transition().duration(200).style("stroke-opacity", alpha_bg);
+             obj[%s].elements().transition().duration(200).style("stroke-opacity", alpha_bg);});'''
+        full_string=''
+        count=0
+        while count<n:
+            full_string=full_string+(java_string)%(count,count+1,count+1)
+            count=count+2
+        return full_string
+
+
+
+
+
 mpl.rcParams['lines.linewidth'] = 0.5
 mpl.rcParams['lines.color'] = 'r'
 mpl.rcParams['axes.facecolor'] = "#E8EBEA"
@@ -35,15 +67,6 @@ mpl.rcParams['ytick.major.size'] = 0
 # Setting encoding for HTML File
 ENCODING = 'utf-8'
 
-# This block allows to override the Default Spyre HTML Template
-# The template in now called view.html but is present in the home directory
-class CustomView(server.View.View):
-    def getHTML(self):
-        file_path = 'view.html'
-        f = codecs.open(file_path, 'r', ENCODING)
-        html = f.read()
-        f.close()
-        return html
 
 
 
@@ -70,13 +93,12 @@ data_sets=h5py.File("datasets.hdf5","r")
 data_sets_names = ['wt_me3', 'wt_me2','spp1_me3','spp1_me2',
                    'swd2_me3','swd2_me2','set2_me3','set2_me2','tbp','h4ac','h3','ncb2']
 location_sets=['genes','CUTS','SUTS']
-data_sets_legend = ['H3K4me$^3$', 'H3K4me$^2$','H3K4me$^3$ ($\Delta$spp1)','H3K4me$^2$ ($\Delta$spp1)'
-    ,'H3K4me$^3$ ($\Delta$swd2)','H3K4me$^2$ ($\Delta$swd2)','H3K4me$^3$ ($\Delta$set2)'
-    ,'H3K4me$^2$ ($\Delta$set2)','TBP','H4Ac','H3','NCB2']
+data_sets_legend = ['H3K4me3', 'H3K4me2','H3K4me3 (spp1)','H3K4me2 (spp1)'
+    ,'H3K4me3 (swd2)','H3K4me2 (swd2)','H3K4me3 (set2)'
+    ,'H3K4me2 (set2)','TBP','H4Ac','H3','NCB2']
 
-class SimpleApp(server.App):
-    title = "Gene plotter"
-    tabs = ["Plot", "Summary", "Contact"]
+class GenePlotter2(server.App):
+    title = "Gene plotter2"
     inputs = [{"input_type": "text",
                "label":'Gene Code/Name',
                "variable_name": "freq",
@@ -115,21 +137,11 @@ class SimpleApp(server.App):
 
                 ]
 
-    outputs = [{"output_type": "plot",
+    outputs = [{"output_type": "html",
                 "control_id": "button1",
                 "output_id": "sine_wave_plot",
                 "on_page_load": False,
-                'tab': 'Plot'}
-        ,       {"output_type": "html",
-                "control_id": "button1",
-                "output_id": "custom_html",
-                "tab": "Contact"},
-               {"output_type": "table",
-                "output_id": "table_id",
-                "control_id": "button1",
-                "tab": "Summary"}
-
-               ]
+                'tab': 'Plot'}]
 
     def search_SGD(self,gene_code=None):
         service = Service("http://yeastmine.yeastgenome.org/yeastmine/service")
@@ -147,16 +159,16 @@ class SimpleApp(server.App):
                     '+' if row["chromosomeLocation.strand"] else '-' ]
 
 
-    def getPlot(self, params):
+    def getHTML(self, params):
         #print(params)
         global current_gene
-        fig = plt.figure(figsize=(9, 7))
-        gs = gridspec.GridSpec(4, 2, height_ratios=[6, 1,1,1])
-        gs.update(hspace=0.05)
-        splt1 = plt.subplot(gs[0, :])
+        data_max=0
+        fig= plt.figure(figsize=(9, 7))
+        gs = gridspec.GridSpec(4, 1, height_ratios=[6, 1,1,1])
         gene = params['freq'].upper()
         range_ext = int(params['range'])
         searched='False'
+        lines=[]
         if gene.startswith('CHR'):
             temp=gene.split(':')
             current_gene=['Region',temp[0][3:],int(temp[1]),int(temp[2]),'+']
@@ -181,49 +193,54 @@ class SimpleApp(server.App):
         print('*'*40+'\nQuery by user:'+str(current_gene)+';\nrange extension:'
             +str(range_ext)+' ;Checked Boxes:'+str(params['check_boxes'])+';SGD used:'+searched+'\n'+'*'*40)
         #print(params)
-        splt1.set_title('{}\nChromosome {}:{}:{}, strand:{}'.format(current_gene[0], current_gene[1], current_gene[2],
-                                                                    current_gene[3], current_gene[4]))
+        splt1 = plt.subplot(gs[0, :])
+        splt1.set_title('{}-Chromosome {}:{}:{}, strand:{}'.format(current_gene[0], current_gene[1], current_gene[2],
+                                                                    current_gene[3], current_gene[4])
+                        ,size=20)
         # splt1.set_xlabel('Distance from TSS (nt)')
         splt1.axes.xaxis.set_ticklabels([])
-        splt1.set_ylabel('Normalized counts per million reads')
+        splt1.set_ylabel('Normalized counts per million reads\n ',size=16,labelpad=15)
         n=0
         fill_colors=['#921B16', '#D6701C','#251F47','#68A691','#68A691',
                      '#447604','#232621','#0BBE30','#BC3908','#191923','#391923',
                      '#591923']
         for item in params['check_boxes']:
             if current_gene[4] == '+':
-                splt1.plot(
-                    data_sets[data_sets_names[int(item)]][current_gene[1]][current_gene[2] - range_ext:current_gene[3] + range_ext],
-                    label=data_sets_legend[int(item)],color=fill_colors[n])
-                splt1.fill_between(range(0,len(data_sets[data_sets_names[int(item)]][current_gene[1]][current_gene[2] - range_ext:current_gene[3] + range_ext])),
-                0, data_sets[data_sets_names[int(item)]][current_gene[1]][current_gene[2] - range_ext:current_gene[3] + range_ext],
-                                   alpha=0.2,color=fill_colors[n])
-            else:
-                splt1.plot(
-                    data_sets[data_sets_names[int(item)]][current_gene[1]][current_gene[2] -range_ext:current_gene[3] +range_ext][::-1],
-                    label=data_sets_legend[int(item)],color=fill_colors[n])
-                splt1.fill_between(range(0,len(data_sets[data_sets_names[int(item)]][current_gene[1]][current_gene[2] - range_ext:current_gene[3] + range_ext][::-1])),
-                0, data_sets[data_sets_names[int(item)]][current_gene[1]][current_gene[2] - range_ext:current_gene[3] + range_ext][::-1],
-                                   alpha=0.2,color=fill_colors[n])
-            n+=1
-        leg=splt1.legend(loc='upper left', bbox_to_anchor=(1, 1))
-        for legobj in leg.legendHandles:
-            legobj.set_linewidth(2.0)
-        size = (current_gene[3] + range_ext) - (current_gene[2] - range_ext)
-        splt1.set_xlim(0, size)
-        #print(str(plt.ylim()[1] - 5))
-        splt1.text(0.02, 0.02, 'Luis Soares', fontsize=6, transform=splt1.transAxes, verticalalignment='top')
+                data=data_sets[data_sets_names[int(item)]][current_gene[1]][current_gene[2] - range_ext:current_gene[3] + range_ext]
+                factor=100./len(data)
 
-        splt2 = plt.subplot(gs[1, :])
+                data=ndimage.interpolation.zoom(data,factor)
+
+                _=splt1.plot(data,
+                    label=data_sets_legend[int(item)],color=fill_colors[n],alpha=0.3,lw=3)
+                lines.extend(_)
+                splt1.fill_between(range(0,len(data)),0, data,alpha=0.2,color=fill_colors[n])
+            if current_gene[4] == '-':
+                data=data_sets[data_sets_names[int(item)]][current_gene[1]][current_gene[2] - range_ext:current_gene[3] + range_ext]
+                factor=100./len(data)
+
+                data=ndimage.interpolation.zoom(data[::-1],factor)
+                print(data)
+                _=splt1.plot(data,
+                    label=data_sets_legend[int(item)],color=fill_colors[n],alpha=0.3,lw=3)
+                lines.extend(_)
+                splt1.fill_between(range(0,len(data)),0, data,alpha=0.2,color=fill_colors[n])
+            if np.max(data)>data_max:data_max=np.max(data)
+            n+=1
+        #plot2
         if current_gene[4] == '+':
             y_values1 = data_sets['genes'][current_gene[1]][0,current_gene[2] - range_ext:current_gene[3] + range_ext]
             y_values2 = data_sets['genes'][current_gene[1]][1,current_gene[2] - range_ext:current_gene[3] + range_ext]
         else:
             y_values1 =  data_sets['genes'][current_gene[1]][0,current_gene[2] - range_ext:current_gene[3] + range_ext][::-1]
             y_values2 =  data_sets['genes'][current_gene[1]][1,current_gene[2] - range_ext:current_gene[3] + range_ext][::-1]
-        x_values = range(0, len(y_values1))
-        #splt2.plot(y_values, 'grey', linewidth=2)
 
+        #splt2.plot(y_values, 'grey', linewidth=2)
+        factor=100./len(y_values1)
+        splt2 = plt.subplot(gs[1, :])
+        y_values1=ndimage.interpolation.zoom(y_values1,factor)
+        y_values2=ndimage.interpolation.zoom(y_values2,factor)
+        x_values = range(0, len(y_values1))
         splt2.plot([0, len(y_values1)], [0, 0], 'black', linewidth=1.5)
         splt2.fill_between(x_values, y_values1/4.0, y_values1, color='#FFB30F')
         splt2.fill_between(x_values, y_values2/4.0, y_values2, color='#FD151B')
@@ -233,74 +250,143 @@ class SimpleApp(server.App):
         splt2.set_yticks([-0.5, 0.5])
         splt2.spines['left'].set_position(('outward', 10))
         splt2.set_yticklabels([])
-        splt2.set_xlim(0, size)
         splt2.axes.xaxis.set_ticklabels([])
-        #plot 3
-        splt3 = plt.subplot(gs[2, :])
+        #plot3
+
         if current_gene[4] == '+':
-            y_values1 =  data_sets['CUTS'][current_gene[1]][0,current_gene[2] - range_ext:current_gene[3] + range_ext]
-            y_values2 =  data_sets['CUTS'][current_gene[1]][1,current_gene[2] - range_ext:current_gene[3] + range_ext]
-            splt3.text(0.01, 0.9, '>'*46, fontsize=13, transform=splt3.transAxes, verticalalignment='top',alpha=0.2)
-            splt3.text(0.01, 0.46, '<'*46, fontsize=13, transform=splt3.transAxes, verticalalignment='top',alpha=0.2)
-            splt2.text(0.01, 0.9, '>'*46, fontsize=13, transform=splt2.transAxes, verticalalignment='top',alpha=0.2)
-            splt2.text(0.01, 0.46, '<'*46, fontsize=13, transform=splt2.transAxes, verticalalignment='top',alpha=0.2)
+            y_values1 = data_sets['CUTS'][current_gene[1]][0,current_gene[2] - range_ext:current_gene[3] + range_ext]
+            y_values2 = data_sets['CUTS'][current_gene[1]][1,current_gene[2] - range_ext:current_gene[3] + range_ext]
         else:
-            y_values1 = data_sets['CUTS'][current_gene[1]][0,current_gene[2] - range_ext:current_gene[3] + range_ext][::-1]
-            y_values2 = data_sets['CUTS'][current_gene[1]][1,current_gene[2] - range_ext:current_gene[3] + range_ext][::-1]
-            splt3.text(0.01, 0.9, '<'*46, fontsize=13, transform=splt3.transAxes, verticalalignment='top',alpha=0.2)
-            splt3.text(0.01, 0.46, '>'*46, fontsize=13, transform=splt3.transAxes, verticalalignment='top',alpha=0.2)
-            splt2.text(0.01, 0.9, '<'*46, fontsize=13, transform=splt2.transAxes, verticalalignment='top',alpha=0.2)
-            splt2.text(0.01, 0.46, '>'*46, fontsize=13, transform=splt2.transAxes, verticalalignment='top',alpha=0.2)
+            y_values1 =  data_sets['CUTS'][current_gene[1]][0,current_gene[2] - range_ext:current_gene[3] + range_ext][::-1]
+            y_values2 =  data_sets['CUTS'][current_gene[1]][1,current_gene[2] - range_ext:current_gene[3] + range_ext][::-1]
+
+        #splt2.plot(y_values, 'grey', linewidth=2)
+        factor=100./len(y_values1)
+        splt3 = plt.subplot(gs[2, :])
+        y_values1=ndimage.interpolation.zoom(y_values1,factor)
+        y_values2=ndimage.interpolation.zoom(y_values2,factor)
         x_values = range(0, len(y_values1))
         splt3.plot([0, len(y_values1)], [0, 0], 'black', linewidth=1.5)
-        splt3.fill_between(x_values, y_values1/4.0, y_values1, color='#028090',alpha=0.75)
-        splt3.fill_between(x_values, y_values2/4.0, y_values2, color='#6EEB83',alpha=0.75)
+        splt3.fill_between(x_values, y_values1/4.0, y_values1, color='#028090')
+        splt3.fill_between(x_values, y_values2/4.0, y_values2, color='#6EEB83')
         splt3.set_ylim(-1.5, 1.5)
         splt3.text(1.01, 0.5, 'CUTS', fontsize=12, transform=splt3.transAxes, verticalalignment='center')
-        splt3.spines['bottom'].set_position(('outward', 10))
-        splt3.spines['bottom'].set_color('black')
-        splt3.spines['bottom'].set_linewidth(2)
-        splt3.spines["bottom"].axis.axes.tick_params(direction="outward", length=5, color='black', width=2)
-        splt3.xaxis.tick_bottom()
         splt3.yaxis.set_tick_params(color='w')
-        splt3.set_yticks([])
-        splt3.set_xlim(0, size)
+        splt3.set_yticks([-0.5, 0.5])
+        splt3.spines['left'].set_position(('outward', 10))
+        splt3.set_yticklabels([])
         splt3.axes.xaxis.set_ticklabels([])
-        #plot 4
-        splt4 = plt.subplot(gs[3, :])
-        if current_gene[4] == '+':
-            y_values1 =  data_sets['SUTS'][current_gene[1]][0,current_gene[2] - range_ext:current_gene[3] + range_ext]
-            y_values2 =  data_sets['SUTS'][current_gene[1]][1,current_gene[2] - range_ext:current_gene[3] + range_ext]
-            splt4.text(0.01, 0.9, '>'*46, fontsize=13, transform=splt4.transAxes, verticalalignment='top',alpha=0.2)
-            splt4.text(0.01, 0.46, '<'*46, fontsize=13, transform=splt4.transAxes, verticalalignment='top',alpha=0.2)
+        #plot4
 
+        if current_gene[4] == '+':
+            y_values1 = data_sets['SUTS'][current_gene[1]][0,current_gene[2] - range_ext:current_gene[3] + range_ext]
+            y_values2 = data_sets['SUTS'][current_gene[1]][1,current_gene[2] - range_ext:current_gene[3] + range_ext]
         else:
-            y_values1 = data_sets['SUTS'][current_gene[1]][0,current_gene[2] - range_ext:current_gene[3] + range_ext][::-1]
-            y_values2 = data_sets['SUTS'][current_gene[1]][1,current_gene[2] - range_ext:current_gene[3] + range_ext][::-1]
-            splt4.text(0.01, 0.9, '<'*46, fontsize=13, transform=splt4.transAxes, verticalalignment='top',alpha=0.2)
-            splt4.text(0.01, 0.46, '>'*46, fontsize=13, transform=splt4.transAxes, verticalalignment='top',alpha=0.2)
+            y_values1 =  data_sets['SUTS'][current_gene[1]][0,current_gene[2] - range_ext:current_gene[3] + range_ext][::-1]
+            y_values2 =  data_sets['SUTS'][current_gene[1]][1,current_gene[2] - range_ext:current_gene[3] + range_ext][::-1]
+
+        #splt2.plot(y_values, 'grey', linewidth=2)
+        factor=100./len(y_values1)
+        splt4 = plt.subplot(gs[3, :])
+        y_values1=ndimage.interpolation.zoom(y_values1,factor)
+        y_values2=ndimage.interpolation.zoom(y_values2,factor)
         x_values = range(0, len(y_values1))
         splt4.plot([0, len(y_values1)], [0, 0], 'black', linewidth=1.5)
-        splt4.fill_between(x_values, y_values1/4.0, y_values1, color='#028090',alpha=0.75)
-        splt4.fill_between(x_values, y_values2/4.0, y_values2, color='#6EEB83',alpha=0.75)
+        splt4.fill_between(x_values, y_values1/4.0, y_values1, color='#028090')
+        splt4.fill_between(x_values, y_values2/4.0, y_values2, color='#6EEB83')
         splt4.set_ylim(-1.5, 1.5)
         splt4.text(1.01, 0.5, 'SUTS', fontsize=12, transform=splt4.transAxes, verticalalignment='center')
-        splt4.spines['bottom'].set_position(('outward', 10))
-        splt4.spines['bottom'].set_color('black')
-        splt4.spines['bottom'].set_linewidth(2)
-        splt4.spines["bottom"].axis.axes.tick_params(direction="outward", length=5, color='black', width=2)
-        splt4.xaxis.tick_bottom()
         splt4.yaxis.set_tick_params(color='w')
-        splt4.set_yticks([])
-        splt4.set_xlim(0, size)
-        for tick in splt4.xaxis.get_major_ticks():
-            tick.label.set_fontsize(12)
-        return fig
+        splt4.set_yticks([-0.5, 0.5])
+        splt4.spines['left'].set_position(('outward', 10))
+        splt4.set_yticklabels([])
+        splt4.axes.xaxis.set_ticklabels([])
+        leg=splt1.legend(ncol=3)
+        leg.set_title("")
+        for legobj in leg.legendHandles:
+            legobj.set_linewidth(3.0)
+        size = (current_gene[3] + range_ext) - (current_gene[2] - range_ext)
+        splt1.set_ylim(0, np.max(data_max)*1.3)
+        #print(str(plt.ylim()[1] - 5))
+        splt1.text(0.02, 0.02, 'Luis Soares', fontsize=6, transform=splt1.transAxes, verticalalignment='top')
 
-    def getHTML(self, params):
+        leg_line=leg.get_lines()
+        number_of_samples=len(leg_line)
+        class HighlightLines(plugins.PluginBase):
+            """A plugin to highlight lines on hover"""
 
-        return '<p>Send me an email:<a href="mailto:luis.miguel.mendes.soares@gmail.com?Subject=Gene%20Plotter" target="_top">Luis Soares</a></p>'
-        # return '<iframe src="https://www.google.com" width="600" height="600"></iframe>'
+            JAVASCRIPT = """
+    mpld3.register_plugin("linehighlight", LineHighlightPlugin);
+    LineHighlightPlugin.prototype = Object.create(mpld3.Plugin.prototype);
+    LineHighlightPlugin.prototype.constructor = LineHighlightPlugin;
+    LineHighlightPlugin.prototype.requiredProps = ["legend_ids","line_ids"];
+    LineHighlightPlugin.prototype.defaultProps = {alpha_bg:0.3, alpha_fg:1.0}
+    function LineHighlightPlugin(fig, props){
+        mpld3.Plugin.call(this, fig, props);
+    };
+
+    LineHighlightPlugin.prototype.draw = function(){
+      var obj=[]
+      for(var i=0; i<this.props.legend_ids.length; i++){
+         obj=obj.concat([mpld3.get_element(this.props.legend_ids[i], this.fig),
+         mpld3.get_element(this.props.line_ids[i], this.fig)]);
+
+        alpha_fg = this.props.alpha_fg;
+        alpha_bg = this.props.alpha_bg;
+}
+%s
+
+        }
+    """%(create_java(number_of_samples*2))
+
+
+            def __init__(self, legend,lines,samples):
+                self.lines = lines
+                self.legend=legend
+                self.dict_ = {"type": "linehighlight",
+                      "legend_ids": [utils.get_id(line) for line in legend],
+                      "line_ids": [utils.get_id(line) for line in lines],
+                      "alpha_bg": lines[0].get_alpha(),
+                      "alpha_fg": 1.0}
+        class TopToolbar(plugins.PluginBase):
+            """Plugin for moving toolbar to top of figure"""
+
+            JAVASCRIPT = """
+    mpld3.register_plugin("toptoolbar", TopToolbar);
+    TopToolbar.prototype = Object.create(mpld3.Plugin.prototype);
+    TopToolbar.prototype.constructor = TopToolbar;
+    function TopToolbar(fig, props){
+        mpld3.Plugin.call(this, fig, props);
+    };
+
+    TopToolbar.prototype.draw = function(){
+      // the toolbar svg doesn't exist
+      // yet, so first draw it
+      this.fig.toolbar.draw();
+
+      // then change the y position to be
+      // at the top of the figure
+      this.fig.toolbar.toolbar.attr("y", 2);
+
+      // then remove the draw function,
+      // so that it is not called again
+      this.fig.toolbar.draw = function() {}
+    }
+    """
+            def __init__(self):
+                self.dict_ = {"type": "toptoolbar"}
+
+        plugins.clear(fig)
+        plugins.connect(fig,
+                        TopToolbar(),
+                        HighlightLines(leg_line,lines,number_of_samples)
+                        ,plugins.Reset()
+                        ,plugins.BoxZoom())
+        file = cStringIO.StringIO()
+        mpld3.save_html(fig,file)
+        return file.getvalue()
+
+
 
 
     def getTable(self, params):
@@ -367,7 +453,7 @@ class SimpleApp(server.App):
 # return "Title Page Here"
 if __name__ == '__main__':
     # site = Site(SimpleSineApp)
-    app = SimpleApp()
+    app = GenePlotter2()
     app.launch(host='0.0.0.0', port=int(os.environ.get('PORT', '5000')))
     # site.launch(host='0.0.0.0', port=int(os.environ.get('PORT', '5000')))
     # app.launch(host='0.0.0.0')
