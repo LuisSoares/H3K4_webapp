@@ -5,5 +5,7 @@ CUTS.txt
 genes.txt
 *.hdf5
 SUTS.txt
+ORF.txt
+log.txt
 *.png
 *.csv

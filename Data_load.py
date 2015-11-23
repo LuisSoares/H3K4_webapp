@@ -34,11 +34,11 @@ def load_gene_list(gene_file,name=True):
 genes = load_gene_list('genes.txt')
 cuts=load_gene_list('CUTS.txt',name=False)
 suts=load_gene_list('suts.txt',name=False)
-
+orfs=load_gene_list('ORF.txt',name=False)
 
 data_sets_names = ['wt_me3', 'wt_me2','spp1_me3','spp1_me2','swd2_me3','swd2_me2'
     ,'set2_me3','set2_me2','tbp','h4ac','h3','ncb2']
-location_sets=['genes','CUTS','SUTS']
+location_sets=['genes','CUTS','SUTS','ORFS']
 
 
 hdf5_file=h5py.File("datasets.hdf5","w")
@@ -46,14 +46,14 @@ hdf5_file=h5py.File("datasets.hdf5","w")
 def create_hdf5_track(dataset_name,hdf5_file_handler):
     temp=hdf5_file_handler.create_group(dataset_name)
     for n,chr in enumerate(list_of_chromosomes):
-        temp.create_dataset(chr,(size_of_chromosomes[n],),dtype='f')
+        temp.create_dataset(chr,(size_of_chromosomes[n],),dtype='f',compression='gzip', compression_opts=9)
 
 
 def create_location_datatsets():
     for item in location_sets:
         temp=hdf5_file.create_group(item)
         for n,chr in enumerate(list_of_chromosomes):
-            temp.create_dataset(chr,(2,size_of_chromosomes[n],),dtype='b')
+            temp.create_dataset(chr,(2,size_of_chromosomes[n],),dtype='b',compression='gzip', compression_opts=9)
 
 def load_track_from_bdg(track_file,name):
     chromosome_dict = OrderedDict()
@@ -99,3 +99,4 @@ load_track_from_bdg('Ncb2_treat_pileup.bdg','ncb2')
 create_genes_tracks(genes,'genes')
 create_genes_tracks(cuts,'CUTS')
 create_genes_tracks(suts,'SUTS')
+create_genes_tracks(orfs,'ORFS')

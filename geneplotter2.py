@@ -84,12 +84,12 @@ def load_gene_list(gene_file,name=True):
     return gene_list
 
 
-genes = load_gene_list('genes.txt')
+genes = load_gene_list('/home/lint78/web_site/genes.txt')
 
 #server.View.View = CustomView
 
 
-data_sets=h5py.File("datasets.hdf5","r")
+data_sets=h5py.File("/home/lint78/web_site/datasets.hdf5","r")
 data_sets_names = ['wt_me3', 'wt_me2','spp1_me3','spp1_me2',
                    'swd2_me3','swd2_me2','set2_me3','set2_me2','tbp','h4ac','h3','ncb2']
 location_sets=['genes','CUTS','SUTS']
@@ -432,7 +432,7 @@ class GenePlotter2(server.App):
 		returns:
 		string of css to insert on page load
 		"""
-        with open('custom_style.css') as style:
+        with open('/home/lint78/web_site/custom_style.css') as style:
             return style.read()
 
     # Java script for google analytics

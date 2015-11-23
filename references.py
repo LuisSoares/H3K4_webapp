@@ -17,11 +17,11 @@ class References(server.App):
         return ''''''
 
     def Informatics(self, params):
-        with open('informatics.html') as page:
+        with open('/home/lint78/web_site/informatics.html') as page:
             return page.read()
 
     def getCustomCSS(self):
-        with open('custom_style.css') as style:
+        with open('/home/lint78/web_site/custom_style.css') as style:
             return style.read()+'''\n .left-panel{display: none;}
         .right-panel{width:80%;margin: 5px}'''
 

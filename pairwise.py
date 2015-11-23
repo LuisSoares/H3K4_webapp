@@ -12,7 +12,7 @@ from bokeh.resources import INLINE
 from bokeh.resources import CDN
 
 
-data=pd.read_csv('temp.csv')
+data=pd.read_csv('/home/lint78/web_site/temp.csv')
 
 x=data['Max_Peak_1000_WT_H3K4me3']
 y=data['Max_Peak_1000_WT_H3K4me2']
@@ -105,9 +105,9 @@ class pairwise(server.App):
        return INLINE.js_raw[0]
 
     def getCustomCSS(self):
-        with open('custom_style.css') as style:
+        with open('/home/lint78/web_site/custom_style.css') as style:
             previous=style.read()
-        return previous+".right-panel{width:35%;margin: 5px}"+INLINE.css_raw[0]
+        return previous+INLINE.css_raw[0]
 
 
 
