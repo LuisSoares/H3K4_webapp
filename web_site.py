@@ -2,7 +2,7 @@ __author__ = 'Luis'
 from spyre import server
 import os
 from index import Index
-from pairwise import pairwise
+from pairwise_up import pairwise
 from simple_spyre import SimpleApp
 from references import References
 
