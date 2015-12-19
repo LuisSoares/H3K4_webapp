@@ -3,8 +3,6 @@ import os
 import h5py
 from spyre import server
 import numpy as np
-
-import pandas as pd
 from bokeh import plotting
 from bokeh.models import OpenURL,Callback,Rect,ColumnDataSource,CustomJS,HoverTool,Range1d,PanTool,WheelZoomTool,TapTool,BoxSelectTool,BoxZoomTool
 from bokeh.embed import components
