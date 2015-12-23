@@ -88,7 +88,8 @@ class pairwise(server.App):
                            toolbar_location='right',
                            x_axis_label = labels[params['ticker']],
                            y_axis_label = labels[params['ticker2']])
-        url = "http://h3k4.sciencelint.org/?freq=@z&check_boxes=__list__,0,1,2&range=__float__0&"
+        #url = "http://h3k4.sciencelint.org/?freq=@z&check_boxes=__list__,0,1,2&range=__float__0&"
+        url="http://www.yeastgenome.org/search?query=@z"
         taptool = p1.select(type=TapTool)
         taptool.callback = OpenURL(url=url)
         hover = p1.select(dict(type=HoverTool))
