@@ -38,7 +38,7 @@ data_sets_display_names=['WT me3','WT me2','SPP1 me3','SPP1 me2',
 location_sets=['genes']
 
 def get_max(dataset1,dataset2=None,range1=None,range2=None,restrict=False):
-    x,y,z=[],[],[]
+    x,y,z,w,wx,wy=[],[],[],[],[],[]
     w=['#0029DE' for _ in range(len(genes))]
     for n,gene in enumerate(genes):
         if gene[4]=='+':
@@ -52,23 +52,31 @@ def get_max(dataset1,dataset2=None,range1=None,range2=None,restrict=False):
                     limit2=gene[3]
             try:
                 temp=np.max(data_sets[dataset1][gene[1]][gene[2]:limit1])
+                temp2=np.argmax(data_sets[dataset1][gene[1]][gene[2]:limit1])
                 x.append(temp)
+                wx.append(temp2)
                 if not restrict and temp>np.max(data_sets[dataset1][gene[1]][gene[2]:gene[3]]):
                     w[n]='#E8053A'
 
             except:
                 temp=np.max(data_sets[dataset1][gene[1]][gene[2]:])
+                temp2=np.argmax(data_sets[dataset1][gene[1]][gene[2]:])
                 x.append(temp)
+                wx.append(temp2)
                 if not restrict and temp>np.max(data_sets[dataset1][gene[1]][gene[2]:gene[3]]):
                     w[n]='#E8053A'
             try:
                 temp=np.max(data_sets[dataset2][gene[1]][gene[2]:limit2])
+                temp2=np.argmax(data_sets[dataset2][gene[1]][gene[2]:limit2])
                 y.append(temp)
+                wy.append(temp2)
                 if not restrict and temp>np.max(data_sets[dataset2][gene[1]][gene[2]:gene[3]]):
                     w[n]='#E8053A'
             except:
                 temp=np.max(data_sets[dataset2][gene[1]][gene[2]:])
+                temp2=np.argmax(data_sets[dataset2][gene[1]][gene[2]:])
                 y.append(temp)
+                wy.append(temp2)
                 if not restrict and temp>np.max(data_sets[dataset2][gene[1]][gene[2]:gene[3]]):
                     w[n]='#E8053A'
             z.append(gene[0])
@@ -82,34 +90,42 @@ def get_max(dataset1,dataset2=None,range1=None,range2=None,restrict=False):
                     limit2=gene[2]
             try:
                 temp=np.max(data_sets[dataset1][gene[1]][limit1:gene[3]])
+                temp2=range1-np.argmax(data_sets[dataset1][gene[1]][limit1:gene[3]])
                 x.append(temp)
+                wx.append(temp2)
                 if not restrict and temp>np.max(data_sets[dataset1][gene[1]][gene[2]:gene[3]]):
                     w[n]='#E8053A'
             except:
                 temp=np.max(data_sets[dataset1][gene[1]][:gene[3]])
+                temp2=range1-np.argmax(data_sets[dataset1][gene[1]][:gene[3]])
                 x.append(temp)
+                wx.append(temp2)
                 if not restrict and temp>np.max(data_sets[dataset1][gene[1]][gene[2]:gene[3]]):
                     w[n]='#E8053A'
             try:
                 temp=np.max(data_sets[dataset2][gene[1]][limit2:gene[3]])
+                temp2=range2-np.argmax(data_sets[dataset2][gene[1]][limit2:gene[3]])
                 y.append(temp)
+                wy.append(temp2)
                 if not restrict and temp>np.max(data_sets[dataset2][gene[1]][gene[2]:gene[3]]):
                     w[n]='#E8053A'
             except:
                 temp=np.max(data_sets[dataset2][gene[1]][:gene[3]])
+                temp2=range2-np.argmax(data_sets[dataset2][gene[1]][:gene[3]])
                 y.append(temp)
+                wy.append(temp2)
                 if not restrict and temp>np.max(data_sets[dataset2][gene[1]][gene[2]:gene[3]]):
                     w[n]='#E8053A'
 
             z.append(gene[0])
-    return x,y,z,w
+    return x,y,z,w,wx,wy
 
 def test(range):
     import matplotlib.pyplot as plt
-    x,y,z=get_max('wt_me3','wt_me2',range,range)
-    plt.scatter(x,y)
-    plt.savefig('temp.png')
-    return x,y,z
+    x,y,z,w,wx,wy=get_max('wt_me3','wt_me2',range,range)
+    #plt.scatter(x,y)
+    #plt.savefig('temp.png')
+    return x,y,z,w,wx,wy
 
 class pairwise(server.App):
     title="Pairwise Comparisons"
@@ -195,10 +211,10 @@ class pairwise(server.App):
         restriction=bool(params['restrict'])
         print (restriction)
 
-        x,y,z,w=get_max(params['ticker'],params['ticker2'],int(params['range1']),int(params['range2']),restrict=restriction)
+        x,y,z,w,wx,wy=get_max(params['ticker'],params['ticker2'],int(params['range1']),int(params['range2']),restrict=restriction)
         data_sets_names = ['wt_me3', 'wt_me2','spp1_me3','spp1_me2',
                    'swd2_me3','swd2_me2','set2_me3','set2_me2','tbp','h4ac','h3','ncb2']
-        print(Counter(w))
+        #print(Counter(w))
         labels={'wt_me3':'WT H3K4me3',
                 'wt_me2':'WT H3K4me2',
                 'spp1_me3':'SPP1 H3K4me3',
@@ -212,7 +228,7 @@ class pairwise(server.App):
                 'h3':'H3',
                 'ncb2':'NCB2'}
 
-        source2=ColumnDataSource({'x': x, 'y': y,'z':z})
+        source2=ColumnDataSource({'x': x, 'y': y,'z':z,'wx':wx,'wy':wy})
         p1=plotting.figure(tools='hover,box_zoom,reset,tap,save',
                            plot_width=400,plot_height=400,
                            toolbar_location='right',
@@ -224,7 +240,7 @@ class pairwise(server.App):
         taptool = p1.select(type=TapTool)
         taptool.callback = OpenURL(url=url)
         hover = p1.select(dict(type=HoverTool))
-        hover.tooltips = [("Gene", "@z")]
+        hover.tooltips = [("Gene", "@z"),('Dataset1','@wx'),('Dataset2','@wy')]
         hover.mode = 'mouse'
         #colors = ["#%02x%02x%02x" % (r, g, 125) for r, g in zip(np.floor(150+x), np.floor(150+y))]
         p1.scatter('x','y',source=source2,color=w,line_alpha=0.1,

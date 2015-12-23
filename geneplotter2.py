@@ -15,6 +15,10 @@ import mpld3
 from mpld3 import plugins, utils
 import cStringIO
 from scipy import ndimage
+
+
+PATH=os.path.dirname(os.path.realpath(__file__))
+
 number_of_samples=0
 #Setting plotting parameters
 tableau20 = [(31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),

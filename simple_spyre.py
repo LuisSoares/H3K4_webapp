@@ -1,7 +1,10 @@
 __author__ = 'Luis'
+"""App for plotting ChIP-Seq data"""
+
 from intermine.webservice import Service
 from spyre import server
 import matplotlib as mpl
+import plot_params
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
@@ -11,30 +14,11 @@ import h5py
 import time
 
 
-#Setting plotting parameters
-mpl.rcParams['lines.linewidth'] = 0.5
-mpl.rcParams['lines.color'] = 'r'
-mpl.rcParams['axes.facecolor'] = "#E8EBEA"
-mpl.rcParams['axes.edgecolor'] = "white"
-mpl.rcParams['axes.grid'] = True
-mpl.rcParams['grid.color'] = 'white'
-mpl.rcParams['grid.linestyle'] = '-'
-mpl.rcParams['grid.alpha'] = 0.5
-mpl.rcParams['grid.linewidth'] = 1.5
-mpl.rcParams['axes.axisbelow'] = True
-mpl.rcParams['font.family'] = 'sans-serif'
-mpl.rcParams['font.sans-serif'] = 'HELVETICA'
-mpl.rcParams['text.color'] = '#3B3B3B'
-mpl.rcParams['axes.color_cycle'] = ['#921B16', '#D6701C','#251F47']
-mpl.rcParams['legend.fancybox'] = True
-mpl.rcParams['legend.fontsize'] = "medium"
-mpl.rcParams['legend.shadow'] = False
-mpl.rcParams['xtick.major.size'] = 0
-mpl.rcParams['ytick.major.size'] = 0
+
 
 # Setting encoding for HTML File
 ENCODING = 'utf-8'
-
+PATH=os.path.dirname(os.path.realpath(__file__))
 
 
 
@@ -52,11 +36,11 @@ def load_gene_list(gene_file,name=True):
     return gene_list
 
 
-genes = load_gene_list('/home/lint78/web_site/genes.txt')
+genes = load_gene_list('{}/genes.txt'.format(PATH))
 
 
 
-data_sets=h5py.File("/home/lint78/web_site/datasets.hdf5","r")
+data_sets=h5py.File("{}/datasets.hdf5".format(PATH),"r")
 data_sets_names = ['wt_me3', 'wt_me2','spp1_me3','spp1_me2',
                    'swd2_me3','swd2_me2','set2_me3','set2_me2','tbp','h4ac','h3','ncb2']
 location_sets=['genes','CUTS','SUTS','ORFS']
@@ -64,14 +48,13 @@ data_sets_legend = ['H3K4me$^3$', 'H3K4me$^2$','H3K4me$^3$ ($\Delta$spp1)','H3K4
     ,'H3K4me$^3$ ($\Delta$swd2)','H3K4me$^2$ ($\Delta$swd2)','H3K4me$^3$ ($\Delta$set2)'
     ,'H3K4me$^2$ ($\Delta$set2)','TBP','H4Ac','H3','NCB2']
 
-class SimpleApp(server.App):
+class genePlotter(server.App):
     title = "Gene plotter"
     tabs = ["Plot", "Summary", "SGD"]
     inputs = [{"input_type": "text",
                "label":'Gene Code/Name',
-               "variable_name": "freq",
+               "variable_name": "input_gene",
                "value": 'YLR249W',
-
               },
               {"input_type": 'checkboxgroup',
                "label":"Track",
@@ -107,8 +90,8 @@ class SimpleApp(server.App):
 
     outputs = [{"output_type": "plot",
                 "control_id": "button1",
-                "output_id": "sine_wave_plot",
-                "on_page_load": False,
+                "output_id": "gene_plot",
+                "on_page_load": True,
                 'tab': 'Plot'}
         ,       {"output_type": "html",
                 "control_id": "button1",
@@ -144,7 +127,7 @@ class SimpleApp(server.App):
         gs = gridspec.GridSpec(4, 2, height_ratios=[6, 1,1,1])
         gs.update(hspace=0.05)
         splt1 = plt.subplot(gs[0, :])
-        gene = params['freq'].upper()
+        gene = params['input_gene'].upper()
         range_ext = int(params['range'])
         searched='False'
         if gene.startswith('CHR'):
@@ -168,7 +151,7 @@ class SimpleApp(server.App):
                     current_gene=temp_gene
                     print (gene)
 #Todo add possibility to search SGD defaulting to SGD coordinates
-        open('/home/lint78/web_site/log.txt','a').write(str(current_gene)+'\t'+str(params['check_boxes'])+'\t'+searched+'\n')
+        open('{}/log.txt'.format(PATH),'a').write(str(current_gene)+'\t'+str(params['check_boxes'])+'\t'+searched+'\n')
         splt1.set_title('{}\nChromosome {}:{}:{}, strand:{}'.format(current_gene[0], current_gene[1], current_gene[2],
                                                                     current_gene[3], current_gene[4]))
         # splt1.set_xlabel('Distance from TSS (nt)')
@@ -305,7 +288,7 @@ class SimpleApp(server.App):
     def getTable(self, params):
         df = pd.DataFrame(columns=['Track', 'Code', 'Chromosome', 'Start', 'End', 'Strand', 'Max', 'Max Pos'])
 
-        gene = params['freq'].upper()
+        gene = params['input_gene'].upper()
         if gene.startswith('CHR'):
             temp=gene.split(':')
             current_gene=['Region',temp[0][3:],int(temp[1]),int(temp[2]),'+']
@@ -342,7 +325,7 @@ class SimpleApp(server.App):
 		returns:
 		string of css to insert on page load
 		"""
-        with open('/home/lint78/web_site/custom_style.css') as style:
+        with open('{}/custom_style.css'.format(PATH)) as style:
             return style.read()
 
     # Java script for google analytics
@@ -363,7 +346,7 @@ class SimpleApp(server.App):
 # return "Title Page Here"
 if __name__ == '__main__':
     # site = Site(SimpleSineApp)
-    app = SimpleApp()
+    app = genePlotter()
     app.launch(host='0.0.0.0', port=int(os.environ.get('PORT', '5000')))
     # site.launch(host='0.0.0.0', port=int(os.environ.get('PORT', '5000')))
     # app.launch(host='0.0.0.0')
