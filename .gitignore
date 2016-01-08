@@ -6,6 +6,11 @@ genes.txt
 *.hdf5
 SUTS.txt
 ORF.txt
+/Features
+/datasets2.hdf5
 log.txt
 *.png
+/datasets.hdf5
+/datasets3.hdf5
+/datasets_uncompressed.hdf5
 *.csv
