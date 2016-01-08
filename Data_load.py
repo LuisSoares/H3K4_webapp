@@ -19,7 +19,7 @@ if not os.path.isfile(os.path.join(PATH,sys.argv[1])):
     sys.exit()
 
 if not os.path.exists(os.path.join(PATH,'Datasets')):
-    os.mkdir(os.path.join(PATH,'Datasets')
+    os.mkdir(os.path.join(PATH,'Datasets'))
 
 HDF5_PATH=os.path.join(PATH,'Datasets')
 
@@ -39,10 +39,14 @@ def initialization(file_name):
     datasets=[]
     with open(file_name) as params_file:
         header=params_file.readline()
-        assert header=='Dset\tRep\tFile\n'
+        #assert header=='Dset\tRep\tFile'
         for line in params_file:
-            datasets.append((line[0],line[1],line[2]))
-        return data_sets
+
+            temp=line.split(' ')
+            print(temp)
+            datasets.append((temp[0],temp[1],temp[2]))
+
+        return datasets
 
 
 def load_gene_list(gene_file,name=True):
@@ -116,7 +120,7 @@ def create_genes_tracks(gene_list,name):
             print(key,value)
             hdf5_file[name][key][...] = value
 
-hdf5_file=h5py.File(os.path.join("HDF5_PATH",datasets.hdf5","w")
+hdf5_file=h5py.File(os.path.join(HDF5_PATH,"datasets_test.hdf5"),"w")
 
 genes = load_gene_list(os.path.join(DEFAULT_TRACK_PATH,'genes.txt'))
 cuts=load_gene_list(os.path.join(DEFAULT_TRACK_PATH,'CUTS.txt'),name=False)
@@ -124,10 +128,15 @@ suts=load_gene_list(os.path.join(DEFAULT_TRACK_PATH,'suts.txt'),name=False)
 orfs=load_gene_list(os.path.join(DEFAULT_TRACK_PATH,'ORF.txt'),name=False)
 
 if __name__ == '__main__':
-    create_location_datatsets()
+    create_location_datatsets(hdf5_file)
     create_genes_tracks(genes,'genes')
     create_genes_tracks(cuts,'CUTS')
     create_genes_tracks(suts,'SUTS')
     create_genes_tracks(orfs,'ORFS')
+    print(initialization(sys.argv[1]))
+    for item in initialization(sys.argv[1]):
+        print(item)
+        create_hdf5_track(item[0],item[1],hdf5_file_handler=hdf5_file)
+        load_track_from_bdg(item[2],item[0])
 
 
