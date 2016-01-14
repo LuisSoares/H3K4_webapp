@@ -120,7 +120,7 @@ def create_genes_tracks(gene_list,name):
             print(key,value)
             hdf5_file[name][key][...] = value
 
-hdf5_file=h5py.File(os.path.join(HDF5_PATH,"datasets_test.hdf5"),"w")
+hdf5_file=h5py.File(os.path.join(HDF5_PATH,"datasets.hdf5"),"w")
 
 genes = load_gene_list(os.path.join(DEFAULT_TRACK_PATH,'genes.txt'))
 cuts=load_gene_list(os.path.join(DEFAULT_TRACK_PATH,'CUTS.txt'),name=False)
