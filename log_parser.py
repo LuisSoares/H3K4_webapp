@@ -1,7 +1,8 @@
 #!/usr/bin/python
 from collections import Counter
-import matplotlib.pyplot as plt
 import matplotlib as mpl
+mpl.use('Agg')
+import matplotlib.pyplot as plt
 
 mpl.rcParams['lines.linewidth'] = 0.5
 mpl.rcParams['lines.color'] = 'r'

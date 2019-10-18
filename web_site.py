@@ -5,7 +5,7 @@ from index import Index
 from pairwise_up import pairwise
 from simple_spyre import SimpleApp
 from references import References
-
+from anchor_plot import AnchorPlot
 
 site = server.Site(Index)
 
@@ -16,6 +16,7 @@ site.root.templateVars['custom_head'] ='''<div class="banner">
 
 site.addApp(SimpleApp, '/app2')
 site.addApp(pairwise, '/app3')
+site.addApp(AnchorPlot, '/app5')
 site.addApp(References, '/app4')
 for fullRoute, _ in site.site_app_bar[1:]:
 			parent, route = site.get_route(fullRoute)

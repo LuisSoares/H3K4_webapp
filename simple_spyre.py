@@ -51,18 +51,17 @@ def load_gene_list(gene_file,name=True):
             gene_list.append(['CUT', temp[0][3:], int(temp[1]), int(temp[2]), temp[3].strip()])
     return gene_list
 
+PATH=os.path.dirname(os.path.realpath(__file__))
+genes = load_gene_list('{}/genes.txt'.format(PATH))
+data_sets=h5py.File("{}/datasets.hdf5".format(PATH),'r')
 
-genes = load_gene_list('/home/lint78/web_site/genes.txt')
 
-
-
-data_sets=h5py.File("/home/lint78/web_site/datasets.hdf5","r")
 data_sets_names = ['wt_me3', 'wt_me2','spp1_me3','spp1_me2',
-                   'swd2_me3','swd2_me2','set2_me3','set2_me2','tbp','h4ac','h3','ncb2']
+                   'swd2_me3','swd2_me2','set2_me3','set2_me2',1,2,3,4,'h3k36_me3','h3k4_me1']
 location_sets=['genes','CUTS','SUTS','ORFS']
 data_sets_legend = ['H3K4me$^3$', 'H3K4me$^2$','H3K4me$^3$ ($\Delta$spp1)','H3K4me$^2$ ($\Delta$spp1)'
     ,'H3K4me$^3$ ($\Delta$swd2)','H3K4me$^2$ ($\Delta$swd2)','H3K4me$^3$ ($\Delta$set2)'
-    ,'H3K4me$^2$ ($\Delta$set2)','TBP','H4Ac','H3','NCB2']
+    ,'H3K4me$^2$ ($\Delta$set2)',1,2,3,4,'H3K36me$^3$','H3K4me$^1$']
 
 class SimpleApp(server.App):
     title = "Gene plotter"
@@ -84,10 +83,8 @@ class SimpleApp(server.App):
                    {"label": "H3K4me2 (&#916;swd2)","value":5},
                    {"label": "H3K4me3 (&#916;set2)","value":6},
                    {"label": "H3K4me2 (&#916;set2)","value":7},
-                   {"label": "TBP(Yoo Jin)","value":8},
-                   {"label": "H4Ac(Yoo Jin)","value":9},
-                   {"label": "H3(Yoo Jin)","value":10},
-                   {"label": "NCB2(Yoo Jin)","value":11}
+                   {"label": "H3K36me3","value":12},
+                    {"label": "H3K4me1","value":13},
                ],
                "variable_name": 'check_boxes'},
               {"input_type": 'slider',
@@ -144,7 +141,7 @@ class SimpleApp(server.App):
         gs = gridspec.GridSpec(4, 2, height_ratios=[6, 1,1,1])
         gs.update(hspace=0.05)
         splt1 = plt.subplot(gs[0, :])
-        gene = params['freq'].upper()
+        gene = params['freq'].upper().rstrip()
         range_ext = int(params['range'])
         searched='False'
         if gene.startswith('CHR'):
@@ -168,7 +165,7 @@ class SimpleApp(server.App):
                     current_gene=temp_gene
                     print (gene)
 #Todo add possibility to search SGD defaulting to SGD coordinates
-        open('/home/lint78/web_site/log.txt','a').write(str(current_gene)+'\t'+str(params['check_boxes'])+'\t'+searched+'\n')
+        #open('/home/lint78/web_site/log.txt','a').write(str(current_gene)+'\t'+str(params['check_boxes'])+'\t'+searched+'\t'+time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())+'\n')
         splt1.set_title('{}\nChromosome {}:{}:{}, strand:{}'.format(current_gene[0], current_gene[1], current_gene[2],
                                                                     current_gene[3], current_gene[4]))
         # splt1.set_xlabel('Distance from TSS (nt)')
@@ -342,7 +339,7 @@ class SimpleApp(server.App):
 		returns:
 		string of css to insert on page load
 		"""
-        with open('/home/lint78/web_site/custom_style.css') as style:
+        with open('{}/custom_style.css'.format(PATH)) as style:
             return style.read()
 
     # Java script for google analytics

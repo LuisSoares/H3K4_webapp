@@ -1,4 +1,214 @@
 
 <body>
+<h2>Chromatin Immunoprecipitation</h2>
+
+<p>This is the original Buratowski lab protocol, as modified by post-doc Philip Komarnitsky from the Struhl lab
+version and modified for ChIP-seq samples.</p>
+<p> Any updates to the protocol will be posted in the <a href="http://http://tfiib.med.harvard.edu/wiki/">Buratowski lab wiki</a>.
+<h3>CHROMATIN PREPARATION</h3>
+
+<p>1. To the 300ml culture (OD600 ≈ 0.5; ≈ 10^7cells/ml) add 30ml 11% HCHO (freshly made from commercial 37% solution) so that the final [HCHO] = 1%. Make the 11% HCHO by adding 9 ml of 37% HCHO to 21 ml diluent (final concentration 0.1M NaCl, 1mM EDTA, 50mM HEPES-KOH, pH 7.5). Incubate 20 min at RT, swirling briefly every 5 min.
+</p>
+<p>Diluent (500 ml):</p>
+<ul>
+<li>0.143M NaCl </li>
+<li>1.43mM EDTA </li>
+<li>71.43mM HEPES-KOH </li>
+<li>Adjust pH with KOH </li>
+<li>Water to 500 ml</li>
+</ul>
+<p>2. Add 37.5 ml of 3M glycine, 20 mM Tris (not pH-ed). Mix and incubate for another 5 min. You may have to dissolve the glycine in a rotating water bath at 50oC prior to use.
+</p>
+<p>3. Pellet the cells, wash 2x with 200 ml cold TBS (20 mM Tris-HCl, pH 7.5, 150 mM NaCl), once with 10 ml ice cold FA lysis buffer/0.1% SDS. Transfer to a 14 ml Falcon tube. At this point pelleted cells can be frozen at -70oC.
+</p>
+<blockquote style="background-color:AliceBlue;margin-left:30px">
+Note: I just do the last wash with 10ml FA buffer/0.1%SDS.</blockquote>
+
+<p>2x FA lysis buffer (200ml):</p>
+<ul>
+<li>100mM Hepes-KOH, pH 7.5 </li>
+<li>300mM NaCl</li>
+<li>2mM EDTA</li>
+<li>2% Triton X-100 </li>
+<li>0.2% Na Deoxycholate</li>
+</ul>
+
+<blockquote style="background-color:AliceBlue;margin-left:30px">
+Note: If you notice nowhere in the protocol the FA lysis buffer is used at 2X or without SDS. I prepare it at 1X with 0.1% SDS.</blockquote>
+
+<p>4. Resuspend the pellet in 1 ml ice cold FA lysis buffer / 0.5% SDS</p>
+
+<p>5. Add 1.5ml small glass beads (Sigma G8772) and vortex in a round bottomed plastic tube (eg. 14ml Falcon 352059) tube for 8 cycles: 30" vortex max speed, 30" on ice. Ensure the beads don’t settle (particularly in later cycles when the foam is quite impressive).</p>
+
+<blockquote style="background-color:AliceBlue;margin-left:30px">
+Note: I do 30 cycles of lysis per sample.</blockquote>
+
+<p>6. Pierce the bottom of the tube with a red-hot 22G needle and insert into a plastic Nalgene 30ml centrifuge (“Oakridge”) tube. Add 6.5 ml of ice cold FA lysis buffer / 0.1% SDS. Collect lysate by centrifugation in SS-34 rotor at 4oC @1000 rpm for 5 min.
+</p>
+<p>7. Transfer the lysate to an ultracentrifuge bottle. Balance to two decimal places. Spin in the 50Ti rotor at 45,000 rpm @ 4oC for 20 min.
+</p>
+<p>8. Decant the supernatant, resuspend the pellet in 8 ml of ice cold FA lysis buffer / 0.1%SDS.
+</p>
+<blockquote style="background-color:AliceBlue;margin-left:30px">
+Note: The presence of a glass-like transparent top layer on the pellet indicates chromatin is out of the cells (allegedly). Pellet cannot be completely resuspended so just use a wooden applicator to break it up as much as possible.</blockquote>
+
+<p>9. Centrifuge in the 50 Ti rotor : 45,000 rpm, 4oC for 20 min.
+</p>
+<blockquote style="background-color:AliceBlue;margin-left:30px">Note : I skip steps 8 and 9 unless there is a huge amount of lipid layer.</blockquote>
+
+<p>10. Decant the supernatant, resuspend the pellet in 1.5 ml of ice cold FA lysis buffer / 0.1% SDS and transfer to a 2*2 ml plastic cryovial.
+</p>
+<p>11. '''< THIS IS YOUR RESOLUTION STEP >''' Sonicate to shear the chromatin (Misonix Sonicator 3000, 20 minutes sonication time, 10 sec pulses on, 10 sec off, output level 6)
+</p>
+<p>12. Centrifuge at 4C maximum speed 15 minutes</p>
+
+<p>13. Sheared chromatin is now in the supernatant</p>
+
+<p>13.1. Measure the protein concentration. Use 0.75-1mg chromatin/IP</p>
+
+<p>14. To test chromatin sonication yield and quality, take 100µl of the chromatin supernatant, perform decrosslinking (see below), extract with phenol-chloroform, resuspend in 200µl TE and run 20µl on an agarose gel.
+
+<blockquote style="background-color:AliceBlue;margin-left:30px">Note: If you do this without RNAse treatment what you are seeing is probably the RNA smear.</blockquote>
+
+
+<h3>IMMUNOPRECIPITATION AND DECROSSLINKING</h3>
+
+<p>15. Thaw chromatin solution and add 5M NaCl until the final concentration is 275 mM NaCl. Pre-wash 10 µl of protein A beads per reaction with 1 ml of FA lysis buffer / 0.1% SDS, @ RT, 4 min on a rotator. Save 10% of the chromatin as an INPUT sample.Add antibody
+</p>
+<blockquote style="background-color:AliceBlue;margin-left:30px">Note : I usually use a final volume of 1ml (the volume of chromatin depends on the concentration)</blockquote>
+
+<p>16. Incubate on a rotator overnight @ 4oC
+</p>
+<p>17. Pellet beads (microfuge 1100rpm, 4min, RTo) and wash once with 1ml of each of the following:
+</p>
+<ul>
+    <li>i) FA lysis buffer/0.1% SDS/275 mM NaCl, 4 min @ RT, rotator (250µl 5M in 10 ml) </li>
+    <li>ii) FA lysis buffer/0.1% SDS/500 mM NaCl, 4 min @ RT, rotator (700µl 5M in 10 ml) </li>
+    <li>iii) 10 mM Tris-HCl, pH 8.0, 0.25 M LiCl, 1 mM EDTA, 0.5% NP-40, 0.5% Na Deoxycholate, 4min @ RT, rotator</li>
+    <li>iv) TE (10 mM Tris-HCl, pH 8.0, 1 mM EDTA), 4 min @ RT, rotator</li>
+</ul>
+
+<p>18. Elute IPed stuff by heating for 20min @ 65oC in 20 µl of 50 mM Tris-HCl, pH 7.5, 10mM EDTA, 1% SDS (Elution buffer)</p>
+
+<p>19. Pellet beads and transfer the supernatant to a fresh tube. Wash the beads with 200µl TE and add that to the supernatant. Add 100µl of TE to the 100µl leftovers (INPUT). To reverse the crosslinks add 10 µl of 20mg/ml pronase (Boehringer) per 200 µl of solution and incubate for 1hr @ 42oC, then 4 - 5 hrs @ 65oC.
+</p>
+<p>20. Add 50 µl 4M LiCl and vortex.
+</p>
+<p>
+    21. Extract with 400µl Phenol-Chloroform-Isoamyl alcohol (25:24:1 PCI) and then 400µl chloroform. In each case, vortex well and microfuge 12000rpm (max speed), 10 min, RT. Precipitate the DNA by adding 2µl of 20 mg/ml glycogen (Boehringer), 1ml 100% EtOH (-20oC). Incubate for ≥1 hour, -80oC. Microfuge max speed, 10 min, RT.
+</p>
+<p>22. Discard supernatant and wash pellet with 100% EtOH. Dry on bench, resuspend in 45.8µl H2).
+</p>
+</div>
+<h2> Library prepararion</h2>
+<p>Protocol adapted from Struhl Lab, using inline barcodes (non-agilent) Reference: "Multiplex Illumina Sequencing Using DNA Barcoding" Koon HoWong, Yi Jin and Zarmik Moqtaderi</p>
+
+<p>0- Quantification with qubit:</p>
+<ul>
+<li>Mix 200ul Buffer and 1ul of Qubit Reagent</li>
+<li>Prepare 190ul +10ul control 0ng</li>
+<li>Prepare 190ul +10ul control 10ng</li>
+<li>Prepare 195ul +5ul sample</li>
+<li>Measure concentrations at Moazed Lab</li>
+</ul>
+
+<p>1. End Repair</p>
+<p>Use 1-10 ng ChIP DNA (lower amount has not been tested)</p>
+
+<p>a) Combine and mix the following components in a microfuge tube</p>
+<ul>
+<li>1-40.8 µl ChIP DNA to be end-repaired (i.e. however much DNA you have)</li>
+<li>5 µl 10X T4 DNA Ligase Buffer</li>
+<li>2 µl 10 mM dNTP Mix</li>
+<li>1 µl T4 DNA Polymerase</li>
+<li>1 µl T4 PNK (NEB)</li>
+<li>0.2 µl DNA Polymerase I, Large (Klenow) fragment (NEB)</li>
+<li>50 µl Total reaction volume</li>
+</ul>
+<p>b) Incubate at room temperature for 45 minutes.</p>
+
+<p>c) Purify on one QIAquick column using the QIAquick PCR Purification Kit and 4 minute dry protocol, eluting in 43 µl of EB with 5 min incubation.</p>
+
+<p>2. Addition of ‘A’ base to 3′ Ends</p>
+<p>a) Prepare stocks of 1 mM dATP using NEB 100 mM dATP</p>
+
+<p>b) Combine and mix the following components</p>
+<ul>
+    <li>DNA from Step 1-	1-34 µl</li>
+    <li>Klenow buffer (NEB2)			  5 µl</li>
+    <li>1 mM dATP 				10 µl</li>
+    <li>Klenow  (3’ to 5’ exo minus) 		  1 µl</li>
+    <li>Total reaction volume			50ul</li>
+</ul>
+<p>c) Incubate for 30 min at 37oC.</p>
+
+<p>d) Purify on one QIAquick MinElute column using the MinElute PCR Purification
+Kit and protocol, and eluting in 10 µl of EB with 5 min incubation.
+</p>
+
+<p>3. Adapter ligation</p>
+<p>a) Dilute the barcoded-adapters 1:50 (for 1 ng starting DNA; use 1:10 dilution for 5-10 ng starting DNA) with water. Do not reuse diluted adapters (according to Illumina, but I don’t know if it really matters).
+</p>
+<p>b) Combine and mix the following components in a microfuge tube</p>
+<ul>
+<li>DNA purified using MinElute 		10 µl </li>
+<li>2xDNA ligase buffer 			15 µl</li>
+<li>Adapter oligo mix (1:50 or 1:10) 	  1 µl</li>
+<li>DNA ligase 				  4 µl</li>
+<li>Total reaction volume			30 µl</li>
+</ul>
+<p>c) Incubate for 15 min at room temperature.</p>
+
+<p>d) Run adapter ligated DNA on a 2% Agarose gel at 120V for 30 min.</p>
+
+<p>e) Excise samples in the range 200-500 bp with a clean scalpel.</p>
+
+<p>f) Purify the DNA from the agarose slices using a QIAGEN Gel Extraction Kit.
+Elute in 60 ul EB.</p>
+
+
+<p>4. PCR Amplification and Size Selection</p>
+
+<p>a) Combine and mix the following components</p>
+<ul>
+<li>H2O					16.6 µl</li>
+<li>DNA from Step 3			20 µl</li>
+<li>5x HF Buffer				10 µl</li>
+<li>10 uM PCR primer mix 		2.5 µl</li>
+<li>25 mM dNTPs				0.4 µl</li>
+<li>Phusion DNA polymerase 		0.5 µl</li>
+<li>Total reaction volume			50 µl</li>
+</ul>
+
+<p>b) Amplify using the following PCR protocol:</p>
+<ul>
+    <li> 30 sec at 98oC</li>
+    <li>[10 sec at 98oC, 30 sec at 65oC, 30 sec at 72oC], Go to step 2,15 more cycles</li>
+<li> 5 min at 72oC</li>
+<li>Hold at 4oC</li>
+</ul>
+<p>*b.1, check PCR amplification by running 5% in 2% agarose gel with Gel Green</p>
+
+<p>c) Clean twice with ALINE DNA size Selector magnetic beads</p>
+<ul>
+	<li>First time increase volume to 100ul</li>
+	<li>Add 200ul slurry</li>
+	<li>Incubate at room temp with no shaking 10 minutes</li>
+	<li>Place in Magnet</li>
+	<li>Remove cleared SN</li>
+	<li>Wash twice (fast) with 300 ul ETOH 80% (do not disturb beads)</li>
+	<li>Let Dry for 10+ minutes</li>
+	<li>Remove from magnet</li>
+	<li>Add 100ul H20 first time, 42ul second time</li>
+	<li>Place in magnet</li>
+	<li>Recover 100ul first time, 40ul second time</li>
+</ul>
+<p>d) Check the cleaning step in agarose gel</p>
+
+<p>5. Quantify and Mix libraries in equal molar ratio (0.033pmols /library)</p>
+
+<p>a) Quantify molarity by Bioanalyzer High sensitivity assay.</p>
+
+<p>b) Mix libraries with equal molarity. Reduce volume to the concentration required by your sequencing facility.</p>
 
 </body>

@@ -4,17 +4,17 @@ from spyre import server
 
 class References(server.App):
     title='References'
-    tabs=['Experimental','Informatics']
+    tabs=['Informatics','Experimental']
     outputs = [{"output_type": "html",
-                "id": "Experimental",
+                "id": "Informatics",
                 "on_page_load": True},
                {"output_type": "html",
-                "id": "Informatics",
+                "id": "Experimental",
                 "on_page_load": True}]
 
     def Experimental(self, params):
-
-        return ''''''
+        with open('/home/lint78/web_site/experimental.html') as page:
+            return page.read()
 
     def Informatics(self, params):
         with open('/home/lint78/web_site/informatics.html') as page:

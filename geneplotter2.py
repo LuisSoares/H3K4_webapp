@@ -84,18 +84,19 @@ def load_gene_list(gene_file,name=True):
     return gene_list
 
 
-genes = load_gene_list('/home/lint78/web_site/genes.txt')
+PATH=os.path.dirname(os.path.realpath(__file__))
+genes = load_gene_list('{}/genes.txt'.format(PATH))
+data_sets=h5py.File("{}/datasets.hdf5".format(PATH),'r')
 
 #server.View.View = CustomView
 
 
-data_sets=h5py.File("/home/lint78/web_site/datasets.hdf5","r")
 data_sets_names = ['wt_me3', 'wt_me2','spp1_me3','spp1_me2',
-                   'swd2_me3','swd2_me2','set2_me3','set2_me2','tbp','h4ac','h3','ncb2']
+                   'swd2_me3','swd2_me2','set2_me3','set2_me2',1,2,3,4,'h3k36_me3','h3k4_me1']
 location_sets=['genes','CUTS','SUTS']
 data_sets_legend = ['H3K4me3', 'H3K4me2','H3K4me3 (spp1)','H3K4me2 (spp1)'
-    ,'H3K4me3 (swd2)','H3K4me2 (swd2)','H3K4me3 (set2)'
-    ,'H3K4me2 (set2)','TBP','H4Ac','H3','NCB2']
+    ,'H3K4me3 (swd2)','H3K4me2 (swd2)','H3K4me3 (set2)',1,2,3,4
+    ,'H3K4me2 (set2)','H3K36me3','H3K4me1']
 
 class GenePlotter2(server.App):
     title = "Gene plotter2"
@@ -116,10 +117,8 @@ class GenePlotter2(server.App):
                    {"label": "H3K4me2 (&#916;swd2)","value":5},
                    {"label": "H3K4me3 (&#916;set2)","value":6},
                    {"label": "H3K4me2 (&#916;set2)","value":7},
-                   {"label": "TBP(Yoo Jin)","value":8},
-                   {"label": "H4Ac(Yoo Jin)","value":9},
-                   {"label": "H3(Yoo Jin)","value":10},
-                   {"label": "NCB2(Yoo Jin)","value":11}
+                    {"label": "H3K36me3","value":12},
+                   {"label": "H3K4me1","value":13}
                ],
                "variable_name": 'check_boxes'},
               {"input_type": 'slider',
@@ -153,8 +152,8 @@ class GenePlotter2(server.App):
         )
         query.add_constraint("symbol", "=",gene_code, code = "A")
         for row in query.rows():
-            print([row["secondaryIdentifier"],row["chromosome.primaryIdentifier"], row["chromosomeLocation.start"],row["chromosomeLocation.end"],
-                    '+' if row["chromosomeLocation.strand"] else '-' ])
+            #print([row["secondaryIdentifier"],row["chromosome.primaryIdentifier"], row["chromosomeLocation.start"],row["chromosomeLocation.end"],
+            #        '+' if row["chromosomeLocation.strand"] else '-' ])
             return [row["secondaryIdentifier"],row["chromosome.primaryIdentifier"][3:], row["chromosomeLocation.start"],row["chromosomeLocation.end"],
                     '+' if row["chromosomeLocation.strand"] else '-' ]
 
@@ -220,7 +219,7 @@ class GenePlotter2(server.App):
                 factor=100./len(data)
 
                 data=ndimage.interpolation.zoom(data[::-1],factor)
-                print(data)
+                #print(data)
                 _=splt1.plot(data,
                     label=data_sets_legend[int(item)],color=fill_colors[n],alpha=0.3,lw=3)
                 lines.extend(_)
@@ -432,7 +431,7 @@ class GenePlotter2(server.App):
 		returns:
 		string of css to insert on page load
 		"""
-        with open('/home/lint78/web_site/custom_style.css') as style:
+        with open('{}/custom_style.css'.format(PATH)) as style:
             return style.read()
 
     # Java script for google analytics
